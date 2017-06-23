@@ -1,12 +1,11 @@
 import org.apache.spark.{SparkConf, SparkContext}
 
-object TfIdfExampleTest {
+object WeatherExampleTest {
 
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local")
-    val sc = new SparkContext(conf)
 
-    WeatherDS.makeDS("src/test/resources")
+    WeatherDS.makeDS(conf, "src/test/resources")
 
   }
 }

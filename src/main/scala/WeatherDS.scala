@@ -50,7 +50,27 @@ object WeatherDS {
           if (array(8).isEmpty) null.asInstanceOf[Double] else array(8).toDouble))
       .toDF(globalTemperaturesHeader: _*)
 
-    globalTemperaturesDF.show()
+    val (globalLandTemperaturesByCountryHeader, globalLandTemperaturesByCountryRdd) =
+      readFile(spark.sparkContext, pathToFiles, GlobalLandTemperaturesByCountry)
+    val globalLandTemperaturesByCountryDF = globalTemperaturesRdd
+      .map(array =>
+        Tuple4[java.sql.Date, Double, Double, String](
+          new java.sql.Date(new java.text.SimpleDateFormat(DateTimeFormat).parse(array(0)).getTime),
+          if (array(1).isEmpty) null.asInstanceOf[Double] else array(1).toDouble,
+          if (array(2).isEmpty) null.asInstanceOf[Double] else array(2).toDouble,
+          array(3)))
+      .toDF(globalLandTemperaturesByCountryHeader: _*)
+
+    val (globalLandTemperaturesByCityHeader, globalLandTemperaturesByCityRdd) =
+      readFile(spark.sparkContext, pathToFiles, GlobalLandTemperaturesByCity)
+    val globalLandTemperaturesByCityDF = globalTemperaturesRdd
+      .map(array =>
+        Tuple7[java.sql.Date, Double, Double, String, String, String, String](
+          new java.sql.Date(new java.text.SimpleDateFormat(DateTimeFormat).parse(array(0)).getTime),
+          if (array(1).isEmpty) null.asInstanceOf[Double] else array(1).toDouble,
+          if (array(2).isEmpty) null.asInstanceOf[Double] else array(2).toDouble,
+          array(3), array(4), array(5), array(6)))
+      .toDF(globalLandTemperaturesByCityHeader: _*)
     //    val regexTokenizer = new RegexTokenizer()
     //      .setInputCol("text")
     //      .setOutputCol("words")

@@ -74,16 +74,21 @@ object WeatherDS {
 
     var tempDF = globalLandTemperaturesByCityDF.select("dt", "AverageTemperature", "City", "Country")
       .map(row => (row.getAs[String](0).substring(0, 4),
-        row.getAs[String](0).substring(0, 3),
-        row.getAs[String](0).substring(0, 2),
         if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1),
-        row.getAs[String](2), row.getAs[String](3))).toDF("Year", "Decade", "Century", "AverageTemperature", "City", "Country")
+        row.getAs[String](2), row.getAs[String](3))).toDF("Year", "AverageTemperature", "City", "Country")
 
     // first element for join
     var resultDF = tempDF
       .select("Year", "City", "Country")
-      .dropDuplicates().toDF("Year", "City", "Country")
+      .map(row => (row.getAs[String](0).substring(0, 4),
+        row.getAs[String](0).substring(0, 3),
+        row.getAs[String](0).substring(0, 2),
+        row.getAs[String](1),
+        row.getAs[String](2)
+      ))
+      .dropDuplicates().toDF("Year", "Decade", "Century", "City", "Country")
 
+    // by in City by Year
     val avgInCityByYear = tempDF.rdd.map(row => ((row.getAs[String](0), row.getAs[String](2), row.getAs[String](3)),
       if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
       .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b)/2)
@@ -107,6 +112,63 @@ object WeatherDS {
       .toDF("Year", "City", "Country", "maxInCityByYear")
 
     resultDF = resultDF.join(maxInCityByYear, Seq("Year", "City", "Country"))
+
+    // in City By Decade
+    val avgInCityByDecade = avgInCityByYear.rdd.map(row => ((row.getAs[String](0).substring(0, 3), row.getAs[String](1), row.getAs[String](2)),
+      if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b)/2)
+      .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
+      .toDF("Decade", "City", "Country", "averageInCityByDecade")
+
+    resultDF = resultDF.join(avgInCityByDecade, Seq("Decade", "City", "Country"))
+
+    val minInCityByDecade = minInCityByYear.rdd.map(row => ((row.getAs[String](0).substring(0, 3), row.getAs[String](1), row.getAs[String](2)),
+      if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => math.min(a, b))
+      .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
+      .toDF("Decade", "City", "Country", "minInCityByDecade")
+
+    resultDF = resultDF.join(minInCityByDecade, Seq("Decade", "City", "Country"))
+
+    val maxInCityByDecade = maxInCityByYear.rdd.map(row => ((row.getAs[String](0).substring(0, 3), row.getAs[String](1), row.getAs[String](2)),
+      if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => math.max(a, b))
+      .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
+      .toDF("Decade", "City", "Country", "maxInCityByDecade")
+
+    resultDF = resultDF.join(maxInCityByDecade, Seq("Decade", "City", "Country"))
+
+    // in City By Century
+    val avgInCityByCentury = avgInCityByDecade.rdd.map(row => ((row.getAs[String](0).substring(0, 2), row.getAs[String](1), row.getAs[String](2)),
+      if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b)/2)
+      .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
+      .toDF("Century", "City", "Country", "averageInCityByCentury")
+
+    resultDF = resultDF.join(avgInCityByCentury, Seq("Century", "City", "Country"))
+
+    val minInCityByCentury = minInCityByDecade.rdd.map(row => ((row.getAs[String](0).substring(0, 2), row.getAs[String](1), row.getAs[String](2)),
+      if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => math.min(a, b))
+      .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
+      .toDF("Century", "City", "Country", "minInCityByCentury")
+
+    resultDF = resultDF.join(minInCityByCentury, Seq("Century", "City", "Country"))
+
+    val maxInCityByCentury = maxInCityByDecade.rdd.map(row => ((row.getAs[String](0).substring(0, 2), row.getAs[String](1), row.getAs[String](2)),
+      if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => math.max(a, b))
+      .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
+      .toDF("Century", "City", "Country", "maxInCityByCentury")
+
+    resultDF = resultDF.join(maxInCityByCentury, Seq("Century", "City", "Country"))
+
+    //Country part
+    tempDF = globalLandTemperaturesByCountryDF.select("dt", "AverageTemperature", "Country")
+      .map(row => (row.getAs[String](0).substring(0, 4),
+        if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1),
+        row.getAs[String](2))).toDF("Year", "AverageTemperature", "Country")
+
 
     resultDF.show()
 

@@ -12,8 +12,6 @@ object WeatherDS {
   val GlobalLandTemperaturesByCountry = "GlobalLandTemperaturesByCountry.csv"
   val GlobalLandTemperaturesByCity = "GlobalLandTemperaturesByCity.csv"
 
-  val DateTimeFormat = "yyyy-MM-dd"
-
   /**
     * The argument should be path to files.
     *
@@ -31,8 +29,6 @@ object WeatherDS {
 
     // this is used to implicitly convert an RDD to a DataFrame.
     import spark.implicits._
-
-    val format = new java.text.SimpleDateFormat(DateTimeFormat)
 
     val (globalTemperaturesHeader, globalTemperaturesRdd) =
       readFile(spark.sparkContext, pathToFiles, GlobalTemperatures)
@@ -246,12 +242,10 @@ object WeatherDS {
     resultDF = resultDF.join(maxInCountryByCentury, Seq("Century", "Country"))
 
     //Country part
-    tempDF = globalTemperaturesDF.select("dt", "LandAverageTemperature", "LandMinTemperature", "LandMaxTemperature")
+    tempDF = globalTemperaturesDF.select("dt", "LandAverageTemperature")
       .map(row => (row.getAs[String](0).substring(0, 4),
-        if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1),
-        if(row(2) == null) null.asInstanceOf[Double] else row.getDouble(2),
-        if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
-      .toDF("Year", "LandAverageTemperature", "LandMinTemperature", "LandMaxTemperature")
+        if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .toDF("Year", "LandAverageTemperature")
 
     resultDF.show()
 

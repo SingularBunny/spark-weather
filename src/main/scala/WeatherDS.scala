@@ -245,6 +245,14 @@ object WeatherDS {
 
     resultDF = resultDF.join(maxInCountryByCentury, Seq("Century", "Country"))
 
+    //Country part
+    tempDF = globalTemperaturesDF.select("dt", "LandAverageTemperature", "LandMinTemperature", "LandMaxTemperature")
+      .map(row => (row.getAs[String](0).substring(0, 4),
+        if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1),
+        if(row(2) == null) null.asInstanceOf[Double] else row.getDouble(2),
+        if(row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .toDF("Year", "LandAverageTemperature", "LandMinTemperature", "LandMaxTemperature")
+
     resultDF.show()
 
     spark.stop()

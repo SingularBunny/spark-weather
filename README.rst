@@ -1,4 +1,4 @@
-Spark TF-IDF index example
+Spark weather example
 =======================
 
 Build with command:

@@ -318,10 +318,8 @@ object Weather {
     resultDF.show()
 
     resultDF.write.format("parquet").save(
-      if (pathToSave.endsWith("/"))
-        if (pathToSave.startsWith("/")) "hdfs:/" + pathToFiles + "weather.parquet"
-        else "hdfs://" + pathToFiles + "weather.parquet"
-      else "hdfs://" + pathToFiles + "/" + "weather.parquet")
+      if (pathToSave.endsWith("/")) pathToSave + "weather.parquet"
+      else pathToSave + "/" + "weather.parquet")
 
     spark.stop()
   }

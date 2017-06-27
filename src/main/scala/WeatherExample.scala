@@ -36,8 +36,8 @@ object WeatherExample {
 
     var tempDF = getGlobalLandTemperaturesByCityDF(spark, pathToFiles).select("dt", "AverageTemperature", "City", "Country")
       .map(row => (row.getAs[String](0).substring(0, 4),
-        if (row(1) == null) null.asInstanceOf[Double] else row.getDouble(1),
-        row.getAs[String](2), row.getAs[String](3))).toDF("Year", "AverageTemperature", "City", "Country")
+        row.getAs[String](2), row.getAs[String](3),
+        if (row(1) == null) null.asInstanceOf[Double] else row.getDouble(1))).toDF("Year", "City", "Country", "AverageTemperature")
 
     // first element for join
     var resultDF = tempDF
@@ -57,7 +57,7 @@ object WeatherExample {
       for(period <- periods) {
         if (period == "Year") {
           if (scale == "Country") tempDF = getGlobalLandTemperaturesByCountryDF(spark, pathToFiles)
-            .select("dt", "AverageTemperature", "Country")
+            .select("dt", "Country", "AverageTemperature")
           else if (scale == "Land") tempDF = getGlobalTemperaturesDF(spark, pathToFiles)
             .select("dt", "LandAverageTemperature")
           minSourceDataFrame = tempDF
@@ -78,7 +78,7 @@ object WeatherExample {
       }
     }
 
-    resultDF.drop("Century", "Decade")
+    resultDF = resultDF.drop("Century", "Decade")
     resultDF.show()
 
     resultDF.write.format("parquet").save(
@@ -138,10 +138,10 @@ object WeatherExample {
                period: String,
                reduceMethod: String): DataFrame = {
     import spark.implicits._
-    sourceDataFrame.rdd.map(row => ((row.getAs[String](0).substring(0, substrIndexFrom(period))
-      , row.getAs[String](2)),
-      if (row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
-      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b) / 2)
+    sourceDataFrame.rdd.map(row => ((row.getAs[String](0).substring(0, substrIndexFrom(period)),
+      row.getAs[String](1)),
+      if (row(2) == null) null.asInstanceOf[Double] else row.getDouble(2)))
+      .reduceByKey((a, b) => reduce(reduceMethod, a, b))
       .map(tuple => (tuple._1._1, tuple._1._2, tuple._2))
       .toDF(period, "Country", reduceMethod + "InCountryBy" + period)
   }
@@ -152,9 +152,9 @@ object WeatherExample {
                reduceMethod: String): DataFrame = {
     import spark.implicits._
     sourceDataFrame.rdd.map(row => ((row.getAs[String](0).substring(0, substrIndexFrom(period)),
-      row.getAs[String](2), row.getAs[String](3)),
-      if (row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
-      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b) / 2)
+      row.getAs[String](1), row.getAs[String](2)),
+      if (row(3) == null) null.asInstanceOf[Double] else row.getDouble(3)))
+      .reduceByKey((a, b) => reduce(reduceMethod, a, b))
       .map(tuple => (tuple._1._1, tuple._1._2, tuple._1._3, tuple._2))
       .toDF(period, "City", "Country", reduceMethod + "InCityBy" + period)
   }

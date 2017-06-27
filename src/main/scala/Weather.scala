@@ -6,7 +6,7 @@ import org.apache.spark.sql.types._
 
 import scala.collection.mutable.ListBuffer
 
-object WeatherDS {
+object Weather {
 
   val GlobalTemperatures = "GlobalTemperatures.csv"
   val GlobalLandTemperaturesByCountry = "GlobalLandTemperaturesByCountry.csv"
@@ -18,10 +18,10 @@ object WeatherDS {
     * @param args arguments.
     */
   def main(args: Array[String]): Unit = {
-    makeDS(args(0), args(1))
+    make(args(0), args(1))
   }
 
-  def makeDS(pathToFiles: String, pathToSave: String) {
+  def make(pathToFiles: String, pathToSave: String) {
     val spark = SparkSession
       .builder()
       .appName("WeatherExample")

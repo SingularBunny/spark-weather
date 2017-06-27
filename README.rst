@@ -1,5 +1,6 @@
 Spark weather example
 =======================
+To synchronize the logic the average data from GlobalTemperatures.csv is used because other files didn't contain min and max values.
 
 Build with command:
 sbt package

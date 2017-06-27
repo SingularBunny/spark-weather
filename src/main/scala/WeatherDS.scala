@@ -241,16 +241,85 @@ object WeatherDS {
 
     resultDF = resultDF.join(maxInCountryByCentury, Seq("Century", "Country"))
 
-    //Country part
+    // Land part
+    // The maximum and minimum values from the file are not used because everywhere average are used.
     tempDF = globalTemperaturesDF.select("dt", "LandAverageTemperature")
       .map(row => (row.getAs[String](0).substring(0, 4),
         if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
       .toDF("Year", "LandAverageTemperature")
 
+    // in Land by Year
+    val avgInLandByYear = tempDF.rdd.map(row => (row.getAs[String](0),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b)/2)
+      .toDF("Year", "averageInLandByYear")
+
+    resultDF = resultDF.join(avgInLandByYear, "Year")
+
+    val minInLandByYear = tempDF.rdd.map(row => (row.getAs[String](0),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => math.min(a, b))
+      .toDF("Year", "minInLandByYear")
+
+    resultDF = resultDF.join(minInLandByYear, "Year")
+
+    val maxInLandByYear = tempDF.rdd.map(row => (row.getAs[String](0),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => math.max(a, b))
+      .toDF("Year", "maxInLandByYear")
+
+    resultDF = resultDF.join(maxInLandByYear, "Year")
+
+    // in Land By Decade
+    val avgInLandByDecade = avgInLandByYear.rdd.map(row => (row.getAs[String](0).substring(0, 3),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b)/2)
+      .toDF("Decade", "averageInLandByDecade")
+
+    resultDF = resultDF.join(avgInLandByDecade, "Decade")
+
+    val minInLandByDecade = minInLandByYear.rdd.map(row => (row.getAs[String](0).substring(0, 3),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => math.min(a, b))
+      .toDF("Decade", "minInLandByDecade")
+
+    resultDF = resultDF.join(minInLandByDecade, "Decade")
+
+    val maxInLandByDecade = maxInLandByYear.rdd.map(row => (row.getAs[String](0).substring(0, 3),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => math.max(a, b))
+      .toDF("Decade", "maxInLandByDecade")
+
+    resultDF = resultDF.join(maxInLandByDecade, "Decade")
+
+    // in Land By Century
+    val avgInLandByCentury = avgInLandByDecade.rdd.map(row => (row.getAs[String](0).substring(0, 2),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => if (a == null) b else if (b == null) a else (a + b)/2)
+      .toDF("Century", "averageInLandByCentury")
+
+    resultDF = resultDF.join(avgInLandByCentury, "Century")
+
+    val minInLandByCentury = minInLandByDecade.rdd.map(row => (row.getAs[String](0).substring(0, 2),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => math.min(a, b))
+      .toDF("Century", "minInLandByCentury")
+
+    resultDF = resultDF.join(minInLandByCentury, "Century")
+
+    val maxInLandByCentury = maxInLandByDecade.rdd.map(row => (row.getAs[String](0).substring(0, 2),
+      if(row(1) == null) null.asInstanceOf[Double] else row.getDouble(1)))
+      .reduceByKey((a, b) => math.max(a, b))
+      .toDF("Century", "maxInLandByCentury")
+
+    resultDF = resultDF.join(maxInLandByCentury, "Century")
     resultDF.show()
 
     spark.stop()
   }
+
+
+
 
   def readFile(sparkContext: SparkContext, pathToFiles: String, fileName: String): (Array[String], RDD[Array[String]]) = {
     val rowData = sparkContext.textFile(if (pathToFiles.endsWith("/")) pathToFiles + fileName

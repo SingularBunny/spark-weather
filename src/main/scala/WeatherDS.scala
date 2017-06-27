@@ -18,10 +18,10 @@ object WeatherDS {
     * @param args arguments.
     */
   def main(args: Array[String]): Unit = {
-    makeDS(args(0))
+    makeDS(args(0), args(1))
   }
 
-  def makeDS(pathToFiles: String) {
+  def makeDS(pathToFiles: String, pathToSave: String) {
     val spark = SparkSession
       .builder()
       .appName("WeatherExample")
@@ -313,13 +313,18 @@ object WeatherDS {
       .toDF("Century", "maxInLandByCentury")
 
     resultDF = resultDF.join(maxInLandByCentury, "Century")
+
+    resultDF.drop("Century", "Decade")
     resultDF.show()
+
+    resultDF.write.format("parquet").save(
+      if (pathToSave.endsWith("/"))
+        if (pathToSave.startsWith("/")) "hdfs:/" + pathToFiles + "weather.parquet"
+        else "hdfs://" + pathToFiles + "weather.parquet"
+      else "hdfs://" + pathToFiles + "/" + "weather.parquet")
 
     spark.stop()
   }
-
-
-
 
   def readFile(sparkContext: SparkContext, pathToFiles: String, fileName: String): (Array[String], RDD[Array[String]]) = {
     val rowData = sparkContext.textFile(if (pathToFiles.endsWith("/")) pathToFiles + fileName

@@ -7,7 +7,7 @@ object WeatherExampleTest {
     val sc = new SparkContext(conf)
 
 
-    WeatherDS.makeDS("src/test/resources")
+    WeatherDS.makeDS("src/test/resources", "weather")
 
   }
 }

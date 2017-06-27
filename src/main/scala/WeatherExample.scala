@@ -106,7 +106,7 @@ object WeatherExample {
   def reduce(method: String, a: Double, b: Double): Double = method match {
     case "min" => math.min(a, b)
     case "max" => math.max(a, b)
-    case "avg" => if (a == null) b else if (b == null) a else (a + b) / 2
+    case "avg" => if (Option(a).isDefined) if (Option(b).isDefined) (a + b) / 2 else a else b
     case _ => throw new IllegalArgumentException
   }
 

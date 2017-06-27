@@ -4,7 +4,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec}
 import scalax.file.Path
 import scala.util.Try
 
-object WeatherExampleSpec extends FlatSpec with BeforeAndAfter{
+class WeatherExampleSpec extends FlatSpec with BeforeAndAfter{
 
   val PathToFiles = "src/test/resources"
   val PathToSave = "weather"
@@ -19,8 +19,8 @@ object WeatherExampleSpec extends FlatSpec with BeforeAndAfter{
     val conf = new SparkConf().setAppName("WeatherExample").setMaster("local")
     val sc = new SparkContext(conf)
 
-    Weather.make(PathToFiles, PathToSave)
+    WeatherExample.make(PathToFiles, PathToSave)
 
-    assert(path.children().isEmpty)
+    assert(path.children().nonEmpty)
   }
 }

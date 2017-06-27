@@ -15,3 +15,6 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+
+ideaExcludeFolders += ".idea"
+ideaExcludeFolders += ".idea_modules"

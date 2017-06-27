@@ -6,7 +6,7 @@ import org.apache.spark.sql.types._
 
 import scala.collection.mutable.ListBuffer
 
-object Weather {
+object WeatherExample {
 
   val GlobalTemperatures = "GlobalTemperatures.csv"
   val GlobalLandTemperaturesByCountry = "GlobalLandTemperaturesByCountry.csv"
